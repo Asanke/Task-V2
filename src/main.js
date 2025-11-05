@@ -208,7 +208,14 @@ class App {
         const name = document.getElementById('signup-name').value;
         const email = document.getElementById('signup-email').value;
         const password = document.getElementById('signup-password').value;
+        const role = document.getElementById('signup-role').value;
         const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        // Validate role selection
+        if (!role) {
+            UI.showError('signup-error', 'Please select your role (VIP or Staff)');
+            return;
+        }
 
         // Prevent double submission
         if (submitBtn.disabled) return;
@@ -216,8 +223,8 @@ class App {
         submitBtn.textContent = 'Creating account...';
 
         try {
-            await AuthService.signup(email, password, name);
-            UI.showToast('Account created successfully!', 'success');
+            await AuthService.signup(email, password, name, role);
+            UI.showToast(`Account created as ${role}!`, 'success');
         } catch (error) {
             UI.showError('signup-error', error.message);
             submitBtn.disabled = false;

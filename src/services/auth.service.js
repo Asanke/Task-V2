@@ -10,18 +10,19 @@ import { auth, db } from '../config/firebase.js';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 class AuthService {
-    async signup(email, password, displayName) {
+    async signup(email, password, displayName, role = 'STAFF') {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
         // Update profile
         await updateProfile(user, { displayName });
 
-        // Create user document
+        // Create user document with role
         await setDoc(doc(db, 'users', user.uid), {
             uid: user.uid,
             email: user.email,
             displayName: displayName,
+            role: role, // VIP or STAFF
             photoURL: null,
             createdAt: serverTimestamp(),
             lastLogin: serverTimestamp()

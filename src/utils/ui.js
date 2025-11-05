@@ -67,6 +67,15 @@ export class UI {
         document.getElementById('user-email-display').textContent = user.email;
         const initials = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
         document.getElementById('user-initials').textContent = initials;
+
+        // Show/hide VIP features based on role
+        if (user.role === 'VIP') {
+            document.querySelectorAll('.vip-only').forEach(el => el.classList.remove('hidden'));
+            console.log('VIP user detected - showing VIP features');
+        } else {
+            document.querySelectorAll('.vip-only').forEach(el => el.classList.add('hidden'));
+            console.log('Staff user detected - hiding VIP features');
+        }
     }
 
     static renderProjects(projects, onSelect) {

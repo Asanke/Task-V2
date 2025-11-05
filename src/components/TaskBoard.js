@@ -19,21 +19,26 @@ export class TaskBoard {
     }
 
     async init() {
+        console.log('TaskBoard init for project:', this.projectId);
+        
         // Load task statuses
         const statusUnsubscribe = FirestoreService.subscribeToTaskStatuses(
             this.projectId,
             (snapshot) => {
+                console.log('Statuses updated:', snapshot.size, 'statuses');
                 this.statuses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 this.render();
             }
         );
         this.unsubscribers.push(statusUnsubscribe);
 
-        // Load tasks
+        // Load tasks - real-time listener
         const tasksUnsubscribe = FirestoreService.subscribeToTasks(
             this.projectId,
             (snapshot) => {
+                console.log('Tasks updated:', snapshot.size, 'tasks - Changes:', snapshot.docChanges().map(c => c.type));
                 this.tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log('Current tasks:', this.tasks);
                 this.render();
             }
         );
