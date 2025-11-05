@@ -42,10 +42,11 @@ class FirestoreService {
     subscribeToOrganizations(userId, callback) {
         const q = query(
             collection(db, 'organizations'),
-            where('members', 'array-contains', userId),
-            orderBy('createdAt', 'desc')
+            where('members', 'array-contains', userId)
         );
-        return onSnapshot(q, callback);
+        return onSnapshot(q, callback, (error) => {
+            console.error('Error subscribing to organizations:', error);
+        });
     }
 
     // ===== PROJECTS =====

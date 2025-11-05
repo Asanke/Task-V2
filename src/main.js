@@ -44,16 +44,23 @@ class App {
     async loadUserData() {
         // Update user profile display
         UI.updateUserProfile(this.currentUser);
+        
+        console.log('Loading user data for:', this.currentUser.uid);
 
         // Load user's organizations
         const unsubscribe = FirestoreService.subscribeToOrganizations(
             this.currentUser.uid,
             (snapshot) => {
+                console.log('Organizations snapshot received:', snapshot.size, 'documents');
                 const orgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log('Parsed organizations:', orgs);
+                
                 if (orgs.length > 0) {
                     this.currentOrg = orgs[0];
+                    console.log('Current org set to:', this.currentOrg);
                     this.loadProjects();
                 } else {
+                    console.log('No organizations found, creating default...');
                     this.createDefaultOrganization();
                 }
             }
@@ -62,13 +69,21 @@ class App {
     }
 
     async createDefaultOrganization() {
-        const orgId = await FirestoreService.createOrganization(this.currentUser.uid, {
-            name: `${this.currentUser.displayName}'s Workspace`,
-            description: 'My personal workspace'
-        });
+        console.log('Creating default organization for user:', this.currentUser.uid);
         
-        this.currentOrg = { id: orgId, name: `${this.currentUser.displayName}'s Workspace` };
-        UI.showToast('Workspace created successfully!', 'success');
+        try {
+            const orgId = await FirestoreService.createOrganization(this.currentUser.uid, {
+                name: `${this.currentUser.displayName}'s Workspace`,
+                description: 'My personal workspace'
+            });
+            
+            console.log('Default organization created with ID:', orgId);
+            this.currentOrg = { id: orgId, name: `${this.currentUser.displayName}'s Workspace` };
+            UI.showToast('Workspace created successfully!', 'success');
+        } catch (error) {
+            console.error('Error creating default organization:', error);
+            UI.showToast('Error creating workspace: ' + error.message, 'error');
+        }
     }
 
     loadProjects() {
@@ -235,11 +250,25 @@ class App {
 
     // Project handlers
     showProjectModal() {
+        // Check if organization is loaded before showing modal
+        if (!this.currentOrg || !this.currentOrg.id) {
+            UI.showToast('Please wait for workspace to load...', 'warning');
+            console.error('Cannot show project modal: currentOrg is null', this.currentOrg);
+            return;
+        }
         UI.showModal('project-modal');
     }
 
     async handleCreateProject(e) {
         e.preventDefault();
+        
+        // Check if organization is loaded
+        if (!this.currentOrg || !this.currentOrg.id) {
+            UI.showToast('Please wait for workspace to load...', 'warning');
+            console.error('Cannot create project: currentOrg is null or missing id', this.currentOrg);
+            return;
+        }
+        
         const name = document.getElementById('project-name').value;
         const description = document.getElementById('project-description').value;
         const color = document.querySelector('input[name="project-color"]:checked')?.value || '#6366F1';
@@ -251,6 +280,7 @@ class App {
         submitBtn.textContent = 'Creating...';
 
         try {
+            console.log('Creating project with org:', this.currentOrg.id);
             await FirestoreService.createProject(this.currentOrg.id, this.currentUser.uid, {
                 name,
                 description,
