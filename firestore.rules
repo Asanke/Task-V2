@@ -86,5 +86,37 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update, delete: if false; // Activities are immutable
     }
+
+    // Events collection (NEW for calendar)
+    match /events/{eventId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
+      // Privacy enforcement: cannot set TitleVisible on Private category unless owner
+      allow write: if request.resource.data.category != 'Private' || 
+        (request.resource.data.privacy != 'TitleVisible' || 
+         request.auth.uid == request.resource.data.userId);
+    }
+
+    // Milestones collection (NEW for calendar)
+    match /milestones/{milestoneId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated();
+    }
+
+    // Availability collection (NEW for calendar)
+    match /availability/{availId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only computed by functions
+    }
+
+    // Activity Log (NEW for calendar events)
+    match /activityLog/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Logs are immutable
+    }
   }
 }

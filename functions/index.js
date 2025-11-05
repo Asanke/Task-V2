@@ -3,6 +3,15 @@ const admin = require("firebase-admin");
 
 admin.initializeApp();
 
+// Import calendar composers
+const calendarComposers = require('./calendar-composers');
+
+// Export calendar functions
+exports.calendarComposeMy = calendarComposers.calendarComposeMy;
+exports.calendarComposeTeam = calendarComposers.calendarComposeTeam;
+exports.calendarComposeProject = calendarComposers.calendarComposeProject;
+exports.availabilityRecomputeDaily = calendarComposers.availabilityRecomputeDaily;
+
 // OpenAI API Key - Get from environment variable or Firebase config
 // For production, use: firebase functions:config:set openai.key="YOUR_KEY"
 const OPENAI_API_KEY = functions.config().openai?.key || process.env.OPENAI_API_KEY;

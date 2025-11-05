@@ -122,6 +122,14 @@ class FirestoreService {
             labels: data.labels || [],
             priority: data.priority || 'MEDIUM',
             progress: 0,
+            // NEW: Progress tracking fields
+            progressPercent: data.progressPercent || 0,
+            progressUpdatedAt: serverTimestamp(),
+            progressMethod: data.progressMethod || 'Manual', // Manual, TimeTracked, Auto
+            deadline: data.deadline || null,
+            milestoneId: data.milestoneId || null,
+            sharePolicy: data.sharePolicy || 'Full', // StatusOnly, Status+Title, Full
+            calendarProjection: data.calendarProjection || 'Show', // Show, Hide
             isSubTask: false,
             parentTaskId: null,
             createdAt: serverTimestamp(),
@@ -136,6 +144,26 @@ class FirestoreService {
         await updateDoc(taskRef, {
             ...data,
             updatedAt: serverTimestamp()
+        });
+    }
+
+    async updateTaskProgress(taskId, progressPercent, userId) {
+        const taskRef = doc(db, 'tasks', taskId);
+        await updateDoc(taskRef, {
+            progressPercent,
+            progressUpdatedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+
+        // Log progress update
+        await addDoc(collection(db, 'activityLog'), {
+            eventType: 'task.progress.updated',
+            userId,
+            metadata: {
+                taskId,
+                progressPercent
+            },
+            timestamp: serverTimestamp()
         });
     }
 
