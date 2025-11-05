@@ -109,9 +109,9 @@ class App {
 
     setupEventListeners() {
         // Auth forms
-        document.getElementById('login-form').addEventListener('submit', (e) => this.handleLogin(e));
-        document.getElementById('signup-form').addEventListener('submit', (e) => this.handleSignup(e));
-        document.getElementById('logout-btn').addEventListener('submit', () => this.handleLogout());
+        document.getElementById('login-form')?.addEventListener('submit', (e) => this.handleLogin(e));
+        document.getElementById('signup-form')?.addEventListener('submit', (e) => this.handleSignup(e));
+        document.getElementById('logout-btn')?.addEventListener('click', () => this.handleLogout());
 
         // Auth tabs
         document.querySelectorAll('.auth-tab').forEach(tab => {
@@ -171,12 +171,20 @@ class App {
         e.preventDefault();
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        // Prevent double submission
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Logging in...';
 
         try {
             await AuthService.login(email, password);
             UI.showToast('Logged in successfully!', 'success');
         } catch (error) {
             UI.showError('login-error', error.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Login';
         }
     }
 
@@ -185,12 +193,20 @@ class App {
         const name = document.getElementById('signup-name').value;
         const email = document.getElementById('signup-email').value;
         const password = document.getElementById('signup-password').value;
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        // Prevent double submission
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating account...';
 
         try {
             await AuthService.signup(email, password, name);
             UI.showToast('Account created successfully!', 'success');
         } catch (error) {
             UI.showError('signup-error', error.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Sign Up';
         }
     }
 
@@ -226,7 +242,13 @@ class App {
         e.preventDefault();
         const name = document.getElementById('project-name').value;
         const description = document.getElementById('project-description').value;
-        const color = document.querySelector('input[name="project-color"]:checked').value;
+        const color = document.querySelector('input[name="project-color"]:checked')?.value || '#6366F1';
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        // Prevent double submission
+        if (submitBtn.disabled) return;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating...';
 
         try {
             await FirestoreService.createProject(this.currentOrg.id, this.currentUser.uid, {
@@ -239,7 +261,11 @@ class App {
             e.target.reset();
             UI.showToast('Project created successfully!', 'success');
         } catch (error) {
+            console.error('Project creation error:', error);
             UI.showToast('Error creating project: ' + error.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Create Project';
         }
     }
 
@@ -303,25 +329,41 @@ class App {
     }
 
     async optimizeWithAI() {
-        if (!this.currentProject) return;
+        if (!this.currentProject) {
+            UI.showToast('Please select a project first', 'warning');
+            return;
+        }
 
+        const btn = document.getElementById('ai-optimize-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span>Optimizing...</span>';
         UI.showToast('AI optimization in progress...', 'info');
         
-        // This will integrate with your existing AI Cloud Functions
         try {
-            // Call AI optimization
-            const response = await fetch('YOUR_CLOUD_FUNCTION_URL', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    projectId: this.currentProject.id
-                })
+            // Import Firebase functions
+            const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js');
+            const functions = getFunctions();
+            
+            // Call AI optimization function
+            const optimizeWorkload = httpsCallable(functions, 'optimizeStaffWorkload');
+            const result = await optimizeWorkload({
+                projectId: this.currentProject.id
             });
 
-            const result = await response.json();
-            UI.showToast('Tasks optimized successfully!', 'success');
+            UI.showToast('AI optimization complete!', 'success');
+            console.log('AI Optimization result:', result.data);
+            
+            // Optionally show results in a modal
+            alert(`AI Suggestions:\n${JSON.stringify(result.data, null, 2)}`);
+            
         } catch (error) {
+            console.error('AI optimization error:', error);
             UI.showToast('AI optimization failed: ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg><span>AI Optimize</span>`;
         }
     }
 
