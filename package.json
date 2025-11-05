@@ -1,17 +1,19 @@
 {
-  "name": "task",
-  "version": "1.0.0",
-  "description": "Task management web app with Firebase",
-  "main": "index.html",
+  "name": "task-v2",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Enterprise AI-powered task management platform",
+  "main": "src/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "keywords": [
-    "task",
+    "task-management",
     "firebase",
-    "crud"
+    "ai",
+    "enterprise"
   ],
   "author": "",
   "license": "ISC",
